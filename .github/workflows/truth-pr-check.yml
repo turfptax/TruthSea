@@ -1,0 +1,78 @@
+name: TruthSea PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
+  TRUTH_TOKEN_ADDRESS: ${{ secrets.TRUTH_TOKEN_ADDRESS }}
+  TRUTH_REGISTRY_ADDRESS: ${{ secrets.TRUTH_REGISTRY_ADDRESS }}
+
+jobs:
+  # ── Job 1: Run contract tests ──────────────────────
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npx hardhat test
+
+  # ── Job 2: Check TRUTH token supply on testnet ─────
+  truth-supply-check:
+    name: Verify TRUTH Supply
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check TruthToken totalSupply
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const rpc = process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';
+            const contract = process.env.TRUTH_TOKEN_ADDRESS;
+
+            if (!contract) {
+              core.setOutput('total_supply', '0');
+              core.warning('TRUTH_TOKEN_ADDRESS not set — skipping supply check');
+              return;
+            }
+
+            // ERC-20 totalSupply() selector: 0x18160ddd
+            const resp = await fetch(rpc, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0', id: 1,
+                method: 'eth_call',
+                params: [{ to: contract, data: '0x18160ddd' }, 'latest']
+              })
+            });
+            const { result } = await resp.json();
+            const supply = BigInt(result);
+            const supplyTruth = Number(supply) / 1e18;
+
+            core.info(`TRUTH total supply: ${supplyTruth} TRUTH`);
+            core.setOutput('total_supply', supplyTruth.toFixed(2));
+
+      - name: Post supply comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const supply = '${{ steps.check.outputs.total_supply }}';
+            const body = `**TruthSea Supply Check**\nTRUTH total supply: **${supply} TRUTH** minted on testnet`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
