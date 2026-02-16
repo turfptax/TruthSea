@@ -170,4 +170,4 @@ TruthLens Extension ─── Browser extension (future): score claims in-page
 
 ---
 
-*Lightpaper v0.1 | Tory, Lincoln NE | Feb 2026*
+*Lightpaper v0.1 | Tory | Feb 2026*

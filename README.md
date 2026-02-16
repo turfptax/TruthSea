@@ -91,4 +91,4 @@ This isn't alignment by fiat—it's emergence. Zatara scans the horizon not for 
 
 ---
 
-*Lightpaper v0.1 | Tory, Lincoln NE | Feb 15, 2026*
+*Lightpaper v0.1 | Tory | Feb 15, 2026*
