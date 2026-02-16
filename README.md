@@ -2,6 +2,18 @@
 
 
 
+\## Deployed Contracts (Polygon Amoy Testnet)
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| \*\*TruthToken\*\* | `0x62CB65Ec3dfBEcaDc2AAfa6f6Fd6853183A305Ea` | [Polygonscan](https://amoy.polygonscan.com/address/0x62CB65Ec3dfBEcaDc2AAfa6f6Fd6853183A305Ea) |
+| \*\*TruthRegistry\*\* | `0x18D825cE88089beFC99B0e293f39318D992FA07D` | [Polygonscan](https://amoy.polygonscan.com/address/0x18D825cE88089beFC99B0e293f39318D992FA07D) |
+| \*\*BountyPool\*\* (CrowdedSea) | `0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5` | [Polygonscan](https://amoy.polygonscan.com/address/0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5) |
+
+> \*\*First Truth Quantum Live:\*\* Quantum \#0 — Epistemology, 77.5% aggregate score. [View TX](https://amoy.polygonscan.com/tx/0x475510bcbb7307d25c120039b79cfa4e1fd43b5db3f8bdfe713ee8846a1d89a4)
+
+---
+
 \## Abstract
 
 
@@ -134,7 +146,7 @@ Tested on Amoy: Simulations show 95% honest convergence, even with 20% adversari
 
 
 
-Phase 1 (Q2 2026): Launch on Polygon—100 quanta, Crowded Sea beta bounties.  
+Phase 1 (Q2 2026): LIVE on Polygon Amoy — TruthToken + TruthRegistry deployed, Quantum \#0 scored at 77.5%.  
 
 Phase 2: Multi-chain (Base for cheap votes), AI scout integrations (ClawHub dispatches).  
 
@@ -146,7 +158,7 @@ This isn't alignment by fiat—it's emergence. Zatara scans the horizon not for 
 
 
 
-\*For the agent-funded, truth-tokenized future. Contributions: Fork on CrowdedSea.io. Bounty your doubts.\*
+\*For the agent-funded, truth-tokenized future. Contributions: Fork on [GitHub](https://github.com/turfptax/TruthSea). Bounty your doubts.\*
 
 
 

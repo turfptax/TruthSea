@@ -1,5 +1,17 @@
 # Quantizing Truth + CrowdedSea: Tokenomics & Architecture
 
+## Deployed Contracts (Polygon Amoy Testnet)
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| **BountyPool** | `0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5` | [Polygonscan](https://amoy.polygonscan.com/address/0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5) |
+| **TruthToken** | `0x62CB65Ec3dfBEcaDc2AAfa6f6Fd6853183A305Ea` | [Polygonscan](https://amoy.polygonscan.com/address/0x62CB65Ec3dfBEcaDc2AAfa6f6Fd6853183A305Ea) |
+| **TruthRegistry** | `0x18D825cE88089beFC99B0e293f39318D992FA07D` | [Polygonscan](https://amoy.polygonscan.com/address/0x18D825cE88089beFC99B0e293f39318D992FA07D) |
+
+> **First Truth Quantum:** Quantum #0 — Epistemology, 77.5% aggregate score. [View TX](https://amoy.polygonscan.com/tx/0x475510bcbb7307d25c120039b79cfa4e1fd43b5db3f8bdfe713ee8846a1d89a4)
+
+---
+
 ## Dual-Product Overview
 
 ```
@@ -108,24 +120,24 @@ TruthLens Extension ─── Browser extension (future): score claims in-page
 
 ## Weekend Warrior Deployment Playbook
 
-### Saturday: Contracts + Testnet
+### Saturday: Contracts + Testnet — COMPLETED
 
 **Morning (4 hrs)**
-1. Deploy TruthToken.sol to Polygon Amoy
-2. Deploy TruthRegistry.sol (linked to TruthToken)
-3. Grant TruthRegistry the minter role on TruthToken
-4. Deploy BountyPool.sol (already built in CrowdedSea)
+1. ~~Deploy TruthToken.sol to Polygon Amoy~~ — `0x62CB65Ec3dfBEcaDc2AAfa6f6Fd6853183A305Ea`
+2. ~~Deploy TruthRegistry.sol (linked to TruthToken)~~ — `0x18D825cE88089beFC99B0e293f39318D992FA07D`
+3. ~~Grant TruthRegistry the minter role on TruthToken~~ — Done
+4. ~~Deploy BountyPool.sol (already built in CrowdedSea)~~ — `0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5`
 
 **Afternoon (4 hrs)**
-5. Create first truth quantum: pin a claim to IPFS, register on-chain
-6. Test the full flow: host → verify → dispute → slash
-7. Hook up CrowdedSea webhook to fire on `bounty-truth` labels
-8. Push both repos to GitHub with READMEs
+5. ~~Create first truth quantum: pin a claim to IPFS, register on-chain~~ — Quantum #0 (Epistemology, 77.5%)
+6. ~~Test the full flow: host → verify → dispute → slash~~ — 59 tests passing
+7. ~~Hook up CrowdedSea webhook to fire on `bounty-truth` labels~~ — Discord webhook live
+8. ~~Push both repos to GitHub with READMEs~~ — [CrowdedSea](https://github.com/turfptax/CrowdedSea) + [TruthSea](https://github.com/turfptax/TruthSea)
 
 ### Sunday: Pitch Materials + Outreach
 
 **Morning (4 hrs)**
-9. Finalize pitch deck (included in this package)
+9. ~~Finalize pitch deck (included in this package)~~ — Landing page + tokenomics updated
 10. Deploy landing page to Vercel (included in this package)
 11. Record a 2-min Loom walkthrough: "Here's truth on-chain"
 
