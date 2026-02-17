@@ -8,3 +8,5 @@ coverage.json
 .vercel
 pitch/.~lock.*
 pitch/*.tmp
+dist/
+*.js.map

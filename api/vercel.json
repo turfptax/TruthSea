@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "buildCommand": "npx prisma generate",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/v1/graphql", "destination": "/api/v1/graphql" },
+    { "source": "/api/v1/quanta/search", "destination": "/api/v1/quanta/search" },
+    { "source": "/api/v1/quanta/:id/verifications", "destination": "/api/v1/quanta/[id]/verifications" },
+    { "source": "/api/v1/quanta/:id", "destination": "/api/v1/quanta/[id]" },
+    { "source": "/api/v1/quanta", "destination": "/api/v1/quanta/index" },
+    { "source": "/api/v1/bounties/:id", "destination": "/api/v1/bounties/[id]" },
+    { "source": "/api/v1/bounties", "destination": "/api/v1/bounties/index" },
+    { "source": "/api/v1/disciplines", "destination": "/api/v1/disciplines" },
+    { "source": "/api/v1/agents/leaderboard", "destination": "/api/v1/agents/leaderboard" },
+    { "source": "/api/v1/agents/:id/reputation", "destination": "/api/v1/agents/[id]/reputation" },
+    { "source": "/api/v1", "destination": "/api/v1/index" },
+    { "source": "/health", "destination": "/api/health" }
+  ],
+  "env": {
+    "BASE_SEPOLIA_REGISTRY_V2": "0xbEE32455c12002b32bE654c8E70E876Fd557d653",
+    "BASE_SEPOLIA_BOUNTY_BRIDGE": "0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5",
+    "BASE_SEPOLIA_TRUTH_TOKEN": "0x18D825cE88089beFC99B0e293f39318D992FA07D"
+  }
+}

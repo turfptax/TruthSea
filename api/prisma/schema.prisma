@@ -1,0 +1,157 @@
+// TruthSea Data Layer — Prisma Schema
+// Indexes on-chain truth quanta + bounties for fast API queries
+// Uses PostgreSQL (Supabase recommended)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Truth Quanta ───────────────────────────────────────
+
+model Quantum {
+  id              Int              @id
+  host            String           @db.VarChar(42) // wallet address
+  ipfsCid         String           @db.VarChar(66)
+  discipline      String           @db.VarChar(128)
+  claim           String
+  status          QuantumStatus    @default(ACTIVE)
+  stakeAmount     String           // wei as string (BigInt)
+  createdAt       DateTime
+  verifierCount   Int              @default(0)
+  erc8004AgentId  String?          @db.VarChar(66) // bytes32 hex
+
+  // ── 4 Truth Frameworks (0-10000 scale on chain, 0-100 in API) ──
+  correspondence  Int              @default(0)
+  coherence       Int              @default(0)
+  convergence     Int              @default(0)
+  pragmatism      Int              @default(0)
+  aggregateScore  Float            @default(0) // computed average / 100
+
+  // ── 8D Moral Vector (-10000 to +10000 on chain, -100 to +100 in API) ──
+  moralCare               Int      @default(0)
+  moralFairness           Int      @default(0)
+  moralLoyalty            Int      @default(0)
+  moralAuthority          Int      @default(0)
+  moralSanctity           Int      @default(0)
+  moralLiberty            Int      @default(0)
+  moralEpistemicHumility  Int      @default(0)
+  moralTemporalStewardship Int    @default(0)
+  moralMagnitude          Float    @default(0) // computed sqrt of sum of squares / 100
+
+  // Relations
+  verifications   Verification[]
+  bountyLinks     Bounty[]
+
+  // Indexes
+  @@index([discipline])
+  @@index([status])
+  @@index([aggregateScore])
+  @@index([host])
+  @@index([createdAt])
+
+  // Full text search
+  @@index([claim])
+}
+
+enum QuantumStatus {
+  ACTIVE
+  DISPUTED
+  ARCHIVED
+  FORKED
+}
+
+// ─── Verifications ──────────────────────────────────────
+
+model Verification {
+  id              Int      @id @default(autoincrement())
+  quantumId       Int
+  verifier        String   @db.VarChar(42)
+  txHash          String   @db.VarChar(66) @unique
+
+  // Truth scores submitted by this verifier
+  correspondence  Int
+  coherence       Int
+  convergence     Int
+  pragmatism      Int
+
+  // Moral vector submitted by this verifier
+  moralCare               Int      @default(0)
+  moralFairness           Int      @default(0)
+  moralLoyalty            Int      @default(0)
+  moralAuthority          Int      @default(0)
+  moralSanctity           Int      @default(0)
+  moralLiberty            Int      @default(0)
+  moralEpistemicHumility  Int      @default(0)
+  moralTemporalStewardship Int    @default(0)
+
+  erc8004AgentId  String?  @db.VarChar(66)
+  createdAt       DateTime @default(now())
+
+  quantum         Quantum  @relation(fields: [quantumId], references: [id])
+
+  @@index([quantumId])
+  @@index([verifier])
+}
+
+// ─── Bounties (from BountyBridge) ───────────────────────
+
+model Bounty {
+  id              Int          @id
+  poster          String       @db.VarChar(42)
+  claimant        String?      @db.VarChar(42)
+  reward          String       // wei as string
+  rewardEth       Float        // human-readable ETH
+  description     String
+  discipline      String       @db.VarChar(128)
+  quantumId       Int?
+  status          BountyStatus @default(OPEN)
+  createdAt       DateTime
+  deadline        DateTime
+  txHash          String?      @db.VarChar(66)
+
+  quantum         Quantum?     @relation(fields: [quantumId], references: [id])
+
+  @@index([status])
+  @@index([discipline])
+  @@index([poster])
+  @@index([deadline])
+}
+
+enum BountyStatus {
+  OPEN
+  CLAIMED
+  PENDING_VERIFICATION
+  COMPLETED
+  REFUNDED
+}
+
+// ─── Agent Reputation (indexed from on-chain) ───────────
+
+model AgentReputation {
+  id                String   @id // wallet address or ERC-8004 ID
+  walletAddress     String   @db.VarChar(42) @unique
+  erc8004AgentId    String?  @db.VarChar(66)
+  totalVerifications Int     @default(0)
+  successfulVerifications Int @default(0)
+  disputesWon       Int      @default(0)
+  disputesLost      Int      @default(0)
+  bountiesCompleted Int      @default(0)
+  truthTokensEarned String   @default("0") // total TRUTH earned (wei)
+  reputationScore   Float    @default(0)   // computed 0-100
+  lastActiveAt      DateTime @default(now())
+
+  @@index([reputationScore])
+}
+
+// ─── Event Sync Cursor ──────────────────────────────────
+
+model SyncCursor {
+  id          String   @id @default("default")
+  lastBlock   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}

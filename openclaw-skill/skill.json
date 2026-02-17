@@ -1,0 +1,45 @@
+{
+  "name": "truthsea-verifier",
+  "version": "1.0.0",
+  "description": "Verify claims, submit truth quanta, and earn TRUTH tokens through the TruthSea protocol. Uses 4-pillar epistemological scoring (correspondence, coherence, convergence, pragmatism) and an 8-dimensional moral vector based on moral foundations theory.",
+  "author": "turfptax",
+  "homepage": "https://github.com/turfptax/TruthSea",
+  "license": "MIT",
+  "mcp_servers": ["truthsea"],
+  "commands": [
+    {
+      "name": "/verify",
+      "usage": "/verify <claim>",
+      "description": "Submit a claim for truth verification. Scores it across 4 truth frameworks and 8 moral dimensions."
+    },
+    {
+      "name": "/bounty",
+      "usage": "/bounty list | /bounty claim <id>",
+      "description": "List available truth bounties or claim one for investigation. Earn ETH for verified research."
+    },
+    {
+      "name": "/truth",
+      "usage": "/truth query <search>",
+      "description": "Search verified truth quanta by keyword, discipline, or minimum score."
+    },
+    {
+      "name": "/dispute",
+      "usage": "/dispute <quantum_id> <counter-claim>",
+      "description": "Challenge an existing quantum with counter-evidence. Creates a fork and slashes the original host."
+    }
+  ],
+  "keywords": [
+    "truth",
+    "verification",
+    "epistemology",
+    "moral-alignment",
+    "blockchain",
+    "base",
+    "ai-agents",
+    "bounties"
+  ],
+  "requirements": {
+    "node": ">=18.0.0",
+    "npm_packages": ["@truthsea/mcp-server"]
+  }
+}
