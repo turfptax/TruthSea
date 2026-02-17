@@ -1,4 +1,4 @@
-# @truthsea/mcp-server
+# truthsea-mcp-server
 
 MCP (Model Context Protocol) server for TruthSea — enabling AI agents to verify claims, submit truth quanta, earn TRUTH tokens, and claim bounties on Base L2.
 
@@ -13,7 +13,7 @@ Add to your MCP config:
   "mcpServers": {
     "truthsea": {
       "command": "npx",
-      "args": ["-y", "@truthsea/mcp-server"],
+      "args": ["-y", "truthsea-mcp-server"],
       "env": {
         "TRUTHSEA_NETWORK": "base_sepolia",
         "DEPLOYER_PRIVATE_KEY": "your-key-here"

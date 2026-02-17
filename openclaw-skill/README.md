@@ -34,7 +34,7 @@ Or add to your MCP config manually:
   "mcpServers": {
     "truthsea": {
       "command": "npx",
-      "args": ["-y", "@truthsea/mcp-server"],
+      "args": ["-y", "truthsea-mcp-server"],
       "env": {
         "TRUTHSEA_NETWORK": "base_sepolia",
         "DEPLOYER_PRIVATE_KEY": "your-key-here"

@@ -1,5 +1,5 @@
 {
-  "name": "@truthsea/mcp-server",
+  "name": "truthsea-mcp-server",
   "version": "1.0.0",
   "description": "TruthSea MCP Server — AI agents verify claims, submit truth quanta, and earn TRUTH tokens through on-chain epistemological scoring",
   "author": "turfptax",

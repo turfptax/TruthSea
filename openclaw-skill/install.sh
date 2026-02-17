@@ -7,7 +7,7 @@ set -e
 echo "🌊 Installing TruthSea Verifier skill..."
 
 # Install the MCP server globally
-npm install -g @truthsea/mcp-server
+npm install -g truthsea-mcp-server
 
 # Copy MCP config
 SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"

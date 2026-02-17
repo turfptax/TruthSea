@@ -40,6 +40,6 @@
   ],
   "requirements": {
     "node": ">=18.0.0",
-    "npm_packages": ["@truthsea/mcp-server"]
+    "npm_packages": ["truthsea-mcp-server"]
   }
 }
