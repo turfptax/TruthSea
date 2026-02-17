@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Install deps
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma
