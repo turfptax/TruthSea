@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/indexer/**/*", "src/lib/**/*"],
+  "exclude": ["node_modules", "dist", "src/routes", "src/server.ts", "src/graphql"]
+}

@@ -16,12 +16,13 @@ RUN npm install --omit=dev
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy source
-COPY src ./src
-COPY tsconfig.json ./
+# Copy source (only indexer + lib, not Express routes)
+COPY src/indexer ./src/indexer
+COPY src/lib ./src/lib
+COPY tsconfig.json tsconfig.indexer.json ./
 
-# Build
-RUN npx tsc
+# Build only the indexer
+RUN npx tsc -p tsconfig.indexer.json
 
 # Run indexer by default (override with CMD for API server)
 CMD ["node", "dist/indexer/sync.js"]
