@@ -24,6 +24,9 @@ import quantaRouter from "./routes/quanta.js";
 import bountiesRouter from "./routes/bounties.js";
 import disciplinesRouter from "./routes/disciplines.js";
 import agentsRouter from "./routes/agents.js";
+import edgesRouter from "./routes/edges.js";
+import dagRouter from "./routes/dag.js";
+import chainsRouter from "./routes/chains.js";
 import { typeDefs, resolvers } from "./graphql/schema.js";
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -53,6 +56,11 @@ app.use("/api/v1/quanta", quantaRouter);
 app.use("/api/v1/bounties", bountiesRouter);
 app.use("/api/v1/disciplines", disciplinesRouter);
 app.use("/api/v1/agents", agentsRouter);
+
+// V2: DAG endpoints
+app.use("/api/v2/edges", edgesRouter);
+app.use("/api/v2/dag", dagRouter);
+app.use("/api/v2/chains", chainsRouter);
 
 // ── GraphQL ──
 
@@ -86,6 +94,20 @@ async function startServer() {
           "GET /api/v1/agents/leaderboard": "Top agents by reputation score",
         },
         graphql: "POST /api/v1/graphql",
+        v2_dag: {
+          "GET /api/v2/edges": "List on-chain DAG edges (filterable)",
+          "GET /api/v2/edges/:id": "Get edge with connected quanta",
+          "GET /api/v2/edges/:id/flags": "Get weak link flags for edge",
+          "GET /api/v2/dag/quantum/:id/ancestors": "Transitive dependencies (BFS up)",
+          "GET /api/v2/dag/quantum/:id/descendants": "Dependents (BFS down)",
+          "GET /api/v2/dag/quantum/:id/chain-score": "Propagated chain score",
+          "GET /api/v2/dag/quantum/:id/weakest-path": "Critical path of weakest links",
+          "GET /api/v2/dag/axioms": "Quanta with no dependencies (depth=0)",
+          "GET /api/v2/dag/crowns": "Quanta with no dependents",
+          "GET /api/v2/chains": "List chain definitions",
+          "GET /api/v2/chains/:id": "Chain with nodes, edges, scores",
+          "GET /api/v2/chains/:id/weakest-links": "Weakest links in chain",
+        },
       },
       contracts: {
         network: "Base Sepolia (chainId: 84532)",

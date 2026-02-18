@@ -28,16 +28,35 @@ const BOUNTY_ABI = [
   "event BountyDisputed(uint256 indexed id, uint256 indexed quantumId)",
 ];
 
+// ── V2 DAG ABI fragments ──
+
+const DAG_ABI = [
+  "function nextEdgeId() view returns (uint256)",
+  "function getEdge(uint256) view returns (tuple(uint256 id, uint256 sourceQuantumId, uint256 targetQuantumId, uint8 edgeType, uint8 status, address proposer, bytes32 evidenceCid, uint256 stakeAmount, uint16 confidence, uint256 createdAt))",
+  "function getOutgoingEdges(uint256) view returns (uint256[])",
+  "function getIncomingEdges(uint256) view returns (uint256[])",
+  "function getChainScore(uint256) view returns (tuple(uint16 chainScore, uint16 weakestLinkScore, uint256 weakestLinkEdgeId, uint256 lastUpdated, uint8 depth))",
+  "event EdgeCreated(uint256 indexed edgeId, uint256 indexed sourceQuantumId, uint256 indexed targetQuantumId, uint8 edgeType, address proposer)",
+  "event EdgeDisputed(uint256 indexed edgeId, address indexed challenger)",
+  "event EdgeInvalidated(uint256 indexed edgeId)",
+  "event EdgeRemoved(uint256 indexed edgeId)",
+  "event ScorePropagated(uint256 indexed quantumId, uint16 chainScore, uint16 weakestLinkScore, uint8 depth)",
+  "event WeakLinkFlagged(uint256 indexed edgeId, address indexed flagger)",
+  "event WeakLinkRewarded(uint256 indexed edgeId, address indexed flagger, uint256 reward)",
+];
+
 // ── Config ──
 
 const RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
 const REGISTRY_ADDR = process.env.BASE_SEPOLIA_REGISTRY_V2 || "0xbEE32455c12002b32bE654c8E70E876Fd557d653";
 const BOUNTY_ADDR = process.env.BASE_SEPOLIA_BOUNTY_BRIDGE || "0xA255A98F2D497c47a7068c4D1ad1C1968f88E0C5";
+const DAG_ADDR = process.env.BASE_SEPOLIA_TRUTH_DAG || "";
 
 // ── Instances ──
 
 export const provider = new ethers.JsonRpcProvider(RPC_URL);
 export const registry = new ethers.Contract(REGISTRY_ADDR, REGISTRY_ABI, provider);
 export const bountyBridge = new ethers.Contract(BOUNTY_ADDR, BOUNTY_ABI, provider);
+export const truthDAG = DAG_ADDR ? new ethers.Contract(DAG_ADDR, DAG_ABI, provider) : null;
 
-export { REGISTRY_ABI, BOUNTY_ABI, REGISTRY_ADDR, BOUNTY_ADDR };
+export { REGISTRY_ABI, BOUNTY_ABI, DAG_ABI, REGISTRY_ADDR, BOUNTY_ADDR, DAG_ADDR };

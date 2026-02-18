@@ -47,6 +47,11 @@ model Quantum {
   verifications   Verification[]
   bountyLinks     Bounty[]
 
+  // V2: DAG relations
+  outgoingEdges     OnChainEdge[]    @relation("EdgeSource")
+  incomingEdges     OnChainEdge[]    @relation("EdgeTarget")
+  propagatedScore   PropagatedScore?
+
   // Indexes
   @@index([discipline])
   @@index([status])
@@ -154,4 +159,197 @@ model SyncCursor {
   id          String   @id @default("default")
   lastBlock   Int      @default(0)
   updatedAt   DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHAIN OF TRUTH — Evidence & Dependency Graph Layer
+// Used by agent-toolkit for epistemological chain testing
+// ═══════════════════════════════════════════════════════════
+
+// ─── Chain Definitions ──────────────────────────────────
+
+model ChainDefinition {
+  id            String      @id               // e.g. "universe_age"
+  name          String                         // "Age of the Universe"
+  discipline    String      @db.VarChar(128)
+  crownClaim    String                         // top-level claim text
+  nodeCount     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  nodes         ChainNode[]
+  edges         ChainEdge[]
+}
+
+// ─── Chain Nodes (scored claims in a chain) ─────────────
+
+model ChainNode {
+  id                String     @id              // e.g. "universe_age.speed_of_light"
+  chainId           String
+  claim             String
+  discipline        String     @db.VarChar(128)
+  layer             Int                          // -1=alternative, 0=foundation, 1=method, 2=inference, 3=crown
+  sourceType        String     @db.VarChar(32)   // VERIFIED_EXPERIMENT, RAW_MEDIA, etc.
+
+  // 4 Truth Framework scores (0-100)
+  correspondence    Int        @default(0)
+  coherence         Int        @default(0)
+  convergence       Int        @default(0)
+  pragmatism        Int        @default(0)
+  intrinsicScore    Float?                       // weighted average of 4 frameworks
+  chainScore        Float?                       // attenuated by weakest dependency
+  weakestLink       String?                      // id of weakest dependency node
+
+  // 8D Moral Vector (-100 to +100)
+  moralCare                Int    @default(0)
+  moralFairness            Int    @default(0)
+  moralLoyalty             Int    @default(0)
+  moralAuthority           Int    @default(0)
+  moralSanctity            Int    @default(0)
+  moralLiberty             Int    @default(0)
+  moralEpistemicHumility   Int    @default(0)
+  moralTemporalStewardship Int    @default(0)
+
+  // V2: On-chain mapping (set by backfill script)
+  onChainQuantumId  Int?                         // maps to Quantum.id once submitted on-chain
+
+  // Metadata
+  scoreReasoning    Json?                        // { correspondence: "...", ... }
+  keyMetrics        Json?                        // { measurementValue: "...", ... }
+  depends           String[]   @default([])      // node IDs this depends on
+  contradicts       String[]   @default([])      // node IDs this contradicts
+  agentId           String?                      // which agent scored this
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  chain             ChainDefinition @relation(fields: [chainId], references: [id])
+  evidenceSources   EvidenceSource[]
+
+  @@index([chainId])
+  @@index([layer])
+  @@index([intrinsicScore])
+  @@index([chainScore])
+  @@index([discipline])
+}
+
+// ─── Evidence Sources (real URLs and findings) ──────────
+
+model EvidenceSource {
+  id            Int        @id @default(autoincrement())
+  nodeId        String                           // chain node this evidence supports
+  chainId       String
+  url           String                           // real URL to paper/dataset/institution
+  title         String                           // title of source
+  finding       String                           // key finding (1-2 sentences)
+  year          Int?                             // publication year
+  sourceType    String     @default("paper")     // paper, dataset, experiment, survey, institution
+
+  createdAt     DateTime   @default(now())
+
+  node          ChainNode  @relation(fields: [nodeId], references: [id])
+
+  @@index([nodeId])
+  @@index([chainId])
+}
+
+// ─── Chain Edges (dependency/support/contradiction links) ─
+
+model ChainEdge {
+  id            Int        @id @default(autoincrement())
+  chainId       String
+  sourceNode    String                           // node ID (from)
+  targetNode    String                           // node ID (to)
+  edgeType      String     @db.VarChar(16)       // depends, supports, contradicts
+
+  createdAt     DateTime   @default(now())
+
+  chain         ChainDefinition @relation(fields: [chainId], references: [id])
+
+  @@unique([chainId, sourceNode, targetNode, edgeType])
+  @@index([chainId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// V2: ON-CHAIN DAG LAYER
+// Indexed from TruthDAG contract events
+// ═══════════════════════════════════════════════════════════
+
+// ─── On-Chain Edges (from TruthDAG contract) ─────────────
+
+model OnChainEdge {
+  id              Int         @id               // matches on-chain edgeId
+  sourceQuantumId Int
+  targetQuantumId Int
+  edgeType        OnChainEdgeType @default(DEPENDS)
+  status          OnChainEdgeStatus @default(ACTIVE)
+  proposer        String      @db.VarChar(42)
+  evidenceCid     String      @db.VarChar(66)
+  stakeAmount     String                        // wei as string
+  confidence      Int         @default(0)       // 0-10000
+  createdAt       DateTime
+  txHash          String?     @db.VarChar(66)
+
+  // Off-chain enrichment (set via API, not indexed from chain)
+  reasoning       String?
+  evidenceUrls    Json?                         // [{url, title, finding}]
+
+  // Relations
+  sourceQuantum   Quantum     @relation("EdgeSource", fields: [sourceQuantumId], references: [id])
+  targetQuantum   Quantum     @relation("EdgeTarget", fields: [targetQuantumId], references: [id])
+  weakLinkFlags   WeakLinkFlag[]
+
+  @@unique([sourceQuantumId, targetQuantumId, edgeType])
+  @@index([sourceQuantumId])
+  @@index([targetQuantumId])
+  @@index([edgeType])
+  @@index([status])
+  @@index([proposer])
+}
+
+enum OnChainEdgeType {
+  DEPENDS
+  SUPPORTS
+  CONTRADICTS
+}
+
+enum OnChainEdgeStatus {
+  ACTIVE
+  DISPUTED
+  INVALIDATED
+  REMOVED
+}
+
+// ─── Propagated Chain Scores ─────────────────────────────
+
+model PropagatedScore {
+  quantumId         Int       @id
+  chainScore        Float     @default(0)       // 0-100 scale
+  weakestLinkScore  Float     @default(0)       // 0-100 scale
+  weakestLinkEdgeId Int?
+  depth             Int       @default(0)       // 0 = axiom
+  lastUpdated       DateTime  @default(now())
+
+  quantum           Quantum   @relation(fields: [quantumId], references: [id])
+
+  @@index([chainScore])
+  @@index([depth])
+}
+
+// ─── Weak Link Flags ─────────────────────────────────────
+
+model WeakLinkFlag {
+  id          Int       @id @default(autoincrement())
+  edgeId      Int
+  flagger     String    @db.VarChar(42)
+  flaggedAt   DateTime  @default(now())
+  resolved    Boolean   @default(false)
+  rewarded    Boolean   @default(false)
+  txHash      String?   @db.VarChar(66)
+
+  edge        OnChainEdge @relation(fields: [edgeId], references: [id])
+
+  @@index([edgeId])
+  @@index([flagger])
 }

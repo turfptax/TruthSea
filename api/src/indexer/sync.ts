@@ -16,7 +16,7 @@
 
 import { ethers } from "ethers";
 import { prisma } from "../lib/prisma.js";
-import { provider, registry, bountyBridge, REGISTRY_ADDR, BOUNTY_ADDR } from "../lib/chain.js";
+import { provider, registry, bountyBridge, truthDAG, REGISTRY_ADDR, BOUNTY_ADDR, DAG_ADDR } from "../lib/chain.js";
 
 const POLL_INTERVAL = Number(process.env.INDEX_POLL_MS) || 12_000; // ~Base block time
 const BATCH_SIZE = 500; // max blocks per query
@@ -307,12 +307,187 @@ async function processBountyEvents(fromBlock: number, toBlock: number) {
   }
 }
 
+// ── Process DAG Events (V2) ──
+
+const EDGE_TYPE_MAP = ["DEPENDS", "SUPPORTS", "CONTRADICTS"] as const;
+const EDGE_STATUS_MAP = ["ACTIVE", "DISPUTED", "INVALIDATED", "REMOVED"] as const;
+
+async function processDAGEvents(fromBlock: number, toBlock: number) {
+  if (!truthDAG) return; // DAG contract not configured
+
+  // EdgeCreated
+  const createdFilter = truthDAG.filters.EdgeCreated();
+  const createdEvents = await truthDAG.queryFilter(createdFilter, fromBlock, toBlock);
+
+  for (const event of createdEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+    const sourceQuantumId = Number(e.args[1]);
+    const targetQuantumId = Number(e.args[2]);
+    const edgeType = Number(e.args[3]);
+    const proposer = e.args[4];
+
+    try {
+      const edge = await truthDAG.getEdge(edgeId);
+
+      await prisma.onChainEdge.upsert({
+        where: { id: edgeId },
+        update: {},
+        create: {
+          id: edgeId,
+          sourceQuantumId,
+          targetQuantumId,
+          edgeType: EDGE_TYPE_MAP[edgeType] || "DEPENDS",
+          status: "ACTIVE",
+          proposer,
+          evidenceCid: edge.evidenceCid,
+          stakeAmount: edge.stakeAmount.toString(),
+          confidence: Number(edge.confidence),
+          createdAt: new Date(Number(edge.createdAt) * 1000),
+          txHash: e.transactionHash,
+        },
+      });
+
+      console.log(`[INDEXER] EdgeCreated #${edgeId}: Q${sourceQuantumId} → Q${targetQuantumId}`);
+    } catch (err: any) {
+      console.error(`[INDEXER] Failed to index edge #${edgeId}:`, err.message);
+    }
+  }
+
+  // EdgeDisputed
+  const disputedFilter = truthDAG.filters.EdgeDisputed();
+  const disputedEvents = await truthDAG.queryFilter(disputedFilter, fromBlock, toBlock);
+
+  for (const event of disputedEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+
+    await prisma.onChainEdge.update({
+      where: { id: edgeId },
+      data: { status: "DISPUTED" },
+    }).catch(() => {});
+
+    console.log(`[INDEXER] EdgeDisputed #${edgeId}`);
+  }
+
+  // EdgeInvalidated
+  const invalidatedFilter = truthDAG.filters.EdgeInvalidated();
+  const invalidatedEvents = await truthDAG.queryFilter(invalidatedFilter, fromBlock, toBlock);
+
+  for (const event of invalidatedEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+
+    await prisma.onChainEdge.update({
+      where: { id: edgeId },
+      data: { status: "INVALIDATED" },
+    }).catch(() => {});
+
+    console.log(`[INDEXER] EdgeInvalidated #${edgeId}`);
+  }
+
+  // EdgeRemoved
+  const removedFilter = truthDAG.filters.EdgeRemoved();
+  const removedEvents = await truthDAG.queryFilter(removedFilter, fromBlock, toBlock);
+
+  for (const event of removedEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+
+    await prisma.onChainEdge.update({
+      where: { id: edgeId },
+      data: { status: "REMOVED" },
+    }).catch(() => {});
+
+    console.log(`[INDEXER] EdgeRemoved #${edgeId}`);
+  }
+
+  // ScorePropagated
+  const propagatedFilter = truthDAG.filters.ScorePropagated();
+  const propagatedEvents = await truthDAG.queryFilter(propagatedFilter, fromBlock, toBlock);
+
+  for (const event of propagatedEvents) {
+    const e = event as ethers.EventLog;
+    const quantumId = Number(e.args[0]);
+    const chainScore = Number(e.args[1]);
+    const weakestLinkScore = Number(e.args[2]);
+    const depth = Number(e.args[3]);
+
+    try {
+      // Fetch full propagated score from chain
+      const score = await truthDAG.getChainScore(quantumId);
+
+      await prisma.propagatedScore.upsert({
+        where: { quantumId },
+        update: {
+          chainScore: chainScore / 100, // 0-10000 → 0-100
+          weakestLinkScore: weakestLinkScore / 100,
+          weakestLinkEdgeId: Number(score.weakestLinkEdgeId) || null,
+          depth,
+          lastUpdated: new Date(),
+        },
+        create: {
+          quantumId,
+          chainScore: chainScore / 100,
+          weakestLinkScore: weakestLinkScore / 100,
+          weakestLinkEdgeId: Number(score.weakestLinkEdgeId) || null,
+          depth,
+          lastUpdated: new Date(),
+        },
+      });
+
+      console.log(`[INDEXER] ScorePropagated Q#${quantumId}: chain=${(chainScore / 100).toFixed(1)} depth=${depth}`);
+    } catch (err: any) {
+      console.error(`[INDEXER] Failed to index propagated score for Q#${quantumId}:`, err.message);
+    }
+  }
+
+  // WeakLinkFlagged
+  const flaggedFilter = truthDAG.filters.WeakLinkFlagged();
+  const flaggedEvents = await truthDAG.queryFilter(flaggedFilter, fromBlock, toBlock);
+
+  for (const event of flaggedEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+    const flagger = e.args[1];
+
+    await prisma.weakLinkFlag.create({
+      data: {
+        edgeId,
+        flagger,
+        flaggedAt: new Date(),
+      },
+    }).catch(() => {});
+
+    console.log(`[INDEXER] WeakLinkFlagged edge #${edgeId} by ${flagger.slice(0, 10)}...`);
+  }
+
+  // WeakLinkRewarded
+  const rewardedFilter = truthDAG.filters.WeakLinkRewarded();
+  const rewardedEvents = await truthDAG.queryFilter(rewardedFilter, fromBlock, toBlock);
+
+  for (const event of rewardedEvents) {
+    const e = event as ethers.EventLog;
+    const edgeId = Number(e.args[0]);
+    const flagger = e.args[1];
+
+    await prisma.weakLinkFlag.updateMany({
+      where: { edgeId, flagger, resolved: false },
+      data: { resolved: true, rewarded: true },
+    }).catch(() => {});
+
+    console.log(`[INDEXER] WeakLinkRewarded edge #${edgeId} → ${flagger.slice(0, 10)}...`);
+  }
+}
+
 // ── Main Loop ──
 
 async function syncLoop() {
   console.log("[INDEXER] Starting TruthSea event indexer...");
   console.log(`[INDEXER] Registry: ${REGISTRY_ADDR}`);
   console.log(`[INDEXER] BountyBridge: ${BOUNTY_ADDR}`);
+  console.log(`[INDEXER] TruthDAG: ${DAG_ADDR || "(not configured)"}`);
+
 
   while (true) {
     try {
@@ -332,6 +507,7 @@ async function syncLoop() {
 
         await processRegistryEvents(fromBlock, toBlock);
         await processBountyEvents(fromBlock, toBlock);
+        await processDAGEvents(fromBlock, toBlock);
         await setLastSyncedBlock(toBlock);
 
         fromBlock = toBlock + 1;

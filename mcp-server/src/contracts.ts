@@ -9,11 +9,15 @@ import { ethers } from "ethers";
 import { getNetworkConfig } from "./config.js";
 import { TruthRegistryV2ABI } from "./abis/TruthRegistryV2.js";
 import { BountyBridgeABI } from "./abis/BountyBridge.js";
+import { TruthDAGABI } from "./abis/TruthDAG.js";
+import { TruthStakingABI } from "./abis/TruthStaking.js";
 
 let provider: ethers.JsonRpcProvider;
 let signer: ethers.Wallet | null = null;
 let registry: ethers.Contract;
 let bountyBridge: ethers.Contract;
+let truthDAG: ethers.Contract | null = null;
+let truthStaking: ethers.Contract | null = null;
 
 export function initContracts() {
   const config = getNetworkConfig();
@@ -42,6 +46,23 @@ export function initContracts() {
     BountyBridgeABI,
     signerOrProvider
   );
+
+  // V2: TruthDAG and TruthStaking (optional — only if addresses configured)
+  if (config.truthDAGAddress) {
+    truthDAG = new ethers.Contract(
+      config.truthDAGAddress,
+      TruthDAGABI,
+      signerOrProvider
+    );
+  }
+
+  if (config.truthStakingAddress) {
+    truthStaking = new ethers.Contract(
+      config.truthStakingAddress,
+      TruthStakingABI,
+      signerOrProvider
+    );
+  }
 }
 
 export function getProvider() {
@@ -59,6 +80,20 @@ export function getRegistry() {
 
 export function getBountyBridge() {
   return bountyBridge;
+}
+
+export function getDAG() {
+  if (!truthDAG) throw new Error("TruthDAG not configured — set BASE_SEPOLIA_TRUTH_DAG");
+  return truthDAG;
+}
+
+export function getStaking() {
+  if (!truthStaking) throw new Error("TruthStaking not configured — set BASE_SEPOLIA_TRUTH_STAKING");
+  return truthStaking;
+}
+
+export function hasDAG(): boolean {
+  return truthDAG !== null;
 }
 
 export function hasSigner(): boolean {

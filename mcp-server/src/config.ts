@@ -11,6 +11,8 @@ export interface NetworkConfig {
   registryAddress: string;
   bountyBridgeAddress: string;
   truthTokenAddress: string;
+  truthDAGAddress: string;
+  truthStakingAddress: string;
   explorerUrl: string;
 }
 
@@ -27,6 +29,10 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     truthTokenAddress:
       process.env.BASE_SEPOLIA_TRUTH_TOKEN ||
       "0x18D825cE88089beFC99B0e293f39318D992FA07D",
+    truthDAGAddress:
+      process.env.BASE_SEPOLIA_TRUTH_DAG || "",
+    truthStakingAddress:
+      process.env.BASE_SEPOLIA_TRUTH_STAKING || "",
     explorerUrl: "https://sepolia.basescan.org",
   },
   base: {
@@ -35,6 +41,8 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     registryAddress: process.env.BASE_REGISTRY_V2 || "",
     bountyBridgeAddress: process.env.BASE_BOUNTY_BRIDGE || "",
     truthTokenAddress: process.env.BASE_TRUTH_TOKEN || "",
+    truthDAGAddress: process.env.BASE_TRUTH_DAG || "",
+    truthStakingAddress: process.env.BASE_TRUTH_STAKING || "",
     explorerUrl: "https://basescan.org",
   },
 };
