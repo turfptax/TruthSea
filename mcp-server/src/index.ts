@@ -71,7 +71,7 @@ console.error(`[TruthSea MCP] V2 DAG: ${dagEnabled ? "enabled" : "disabled (no D
 
 const server = new McpServer({
   name: "truthsea",
-  version: "2.0.0",
+  version: "2.5.0",
 });
 
 // ── Register Tools ──

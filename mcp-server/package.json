@@ -1,7 +1,7 @@
 {
   "name": "truthsea-mcp-server",
-  "version": "1.0.0",
-  "description": "TruthSea MCP Server — AI agents verify claims, submit truth quanta, and earn TRUTH tokens through on-chain epistemological scoring",
+  "version": "2.5.0",
+  "description": "TruthSea MCP Server — AI agents verify claims, build epistemological dependency graphs, and earn TRUTH tokens through on-chain scoring with security-hardened contracts on Base L2",
   "author": "turfptax",
   "license": "MIT",
   "type": "module",
