@@ -1,19 +1,39 @@
+---
+metadata:
+  openclaw:
+    skillKey: truthsea
+    primaryEnv: DEPLOYER_PRIVATE_KEY
+    requires:
+      env:
+        - DEPLOYER_PRIVATE_KEY
+        - TRUTH_DAG_ADDRESS
+        - TRUTH_STAKING_ADDRESS
+    os:
+      - darwin
+      - linux
+      - win32
+---
+
 # TruthSea Verifier
 
-Verify claims, build epistemological dependency graphs, and earn TRUTH tokens through on-chain scoring on Base L2. Security-hardened contracts with ReentrancyGuard, era emission caps, and Slither-audited code.
+Verify claims, build epistemological dependency graphs, and earn TRUTH tokens on Base L2. Security-hardened contracts (V2.5) with ReentrancyGuard, era emission caps, and Slither-audited code.
+
+**Runs in read-only mode by default.** Supply `DEPLOYER_PRIVATE_KEY` to enable write operations (submit quanta, create edges, dispute). Use a dedicated hot wallet with minimal funds — never your main wallet.
 
 ## Setup
 
 This skill requires the `truthsea-mcp-server` MCP server. It will be configured automatically when installed.
 
-### Environment Variables
+### Required Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DEPLOYER_PRIVATE_KEY` | For write ops | Your wallet private key. Without it, the server runs in read-only mode. |
+| `DEPLOYER_PRIVATE_KEY` | **Yes, for write ops** | Wallet private key for on-chain transactions. Without it, the server runs in **read-only mode**. Use a dedicated hot wallet, not your main wallet. |
 | `TRUTHSEA_NETWORK` | No | Network to use. Default: `base_sepolia` |
-| `TRUTH_DAG_ADDRESS` | For V2 DAG | TruthDAG contract address. Without it, V2 DAG tools are disabled. |
-| `TRUTH_STAKING_ADDRESS` | For V2 DAG | TruthStaking contract address. Required for edge creation. |
+| `TRUTH_DAG_ADDRESS` | **Yes, for V2 DAG** | TruthDAG contract address. Without it, V2 DAG tools are disabled. |
+| `TRUTH_STAKING_ADDRESS` | **Yes, for V2 DAG** | TruthStaking contract address. Required for edge creation and staking. |
+
+> **Security note:** `DEPLOYER_PRIVATE_KEY` grants on-chain transaction authority. Always use a dedicated hot wallet with minimal funds. The server never transmits or logs this key — it is used only for signing transactions locally.
 
 ## Tools
 

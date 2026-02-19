@@ -1,11 +1,19 @@
 {
   "name": "truthsea",
   "version": "2.5.0",
-  "description": "Verify claims, build epistemological dependency graphs, and earn TRUTH tokens through the TruthSea protocol on Base L2. Features 4-pillar truth scoring, 8-dimensional moral vector, on-chain DAG with chain score propagation, and security-hardened contracts.",
+  "description": "Verify claims, build epistemological dependency graphs, and earn TRUTH tokens on Base L2. 4-pillar truth scoring, 8-dimensional moral vector, on-chain DAG with chain score propagation. Runs in read-only mode by default; supply a wallet key for write operations.",
   "author": "turfptax",
   "homepage": "https://github.com/turfptax/TruthSea",
   "license": "MIT",
   "mcp_servers": ["truthsea"],
+  "primaryEnv": "DEPLOYER_PRIVATE_KEY",
+  "requires": {
+    "env": [
+      "DEPLOYER_PRIVATE_KEY",
+      "TRUTH_DAG_ADDRESS",
+      "TRUTH_STAKING_ADDRESS"
+    ]
+  },
   "commands": [
     {
       "name": "/verify",
