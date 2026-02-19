@@ -17,7 +17,7 @@ contract TruthStaking {
     //  State
     // ──────────────────────────────────────────────
 
-    IERC20 public truthToken;
+    IERC20 public immutable truthToken;
     address public owner;
 
     /// @notice Authorized contracts that can slash and reward (TruthDAG, etc.)
@@ -39,6 +39,7 @@ contract TruthStaking {
     event Slashed(address indexed user, bytes32 indexed key, uint256 amount, address indexed slasher);
     event Rewarded(address indexed user, uint256 amount, address indexed rewarder);
     event AuthorizationUpdated(address indexed account, bool status);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ──────────────────────────────────────────────
     //  Modifiers
@@ -176,6 +177,8 @@ contract TruthStaking {
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Zero address");
+        address oldOwner = owner;
         owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

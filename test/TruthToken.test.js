@@ -86,11 +86,56 @@ describe("TruthToken", function () {
         .to.be.revertedWith("Not a minter");
     });
 
-    it("reverts if minting would exceed MAX_SUPPLY", async () => {
-      const maxSupply = await token.MAX_SUPPLY();
-      await token.connect(minter).mint(user1.address, maxSupply, "fill");
+    it("reverts if minting would exceed era emission cap", async () => {
+      const eraCap = await token.eraEmissionCap(); // 400M in era 0
+      await token.connect(minter).mint(user1.address, eraCap, "fill-era");
       await expect(token.connect(minter).mint(user1.address, 1, "overflow"))
-        .to.be.revertedWith("Exceeds max supply");
+        .to.be.revertedWith("Exceeds era emission cap");
+    });
+
+    it("tracks eraMinted per era", async () => {
+      await token.connect(minter).mint(user1.address, HUNDRED_TRUTH, "test");
+      expect(await token.eraMinted(0)).to.equal(HUNDRED_TRUTH);
+    });
+
+    it("can mint in a new era after previous era is full", async () => {
+      const era0Cap = await token.eraEmissionCap(); // 400M
+      await token.connect(minter).mint(user1.address, era0Cap, "fill-era0");
+
+      // Advance to era 1 (4 years)
+      await time.increase(4 * 365 * 24 * 60 * 60);
+      expect(await token.currentEra()).to.equal(1);
+
+      // Can mint in era 1 (cap = 200M)
+      await token.connect(minter).mint(user1.address, HUNDRED_TRUTH, "era1-mint");
+      expect(await token.eraMinted(1)).to.equal(HUNDRED_TRUTH);
+    });
+
+    it("reverts if minting would exceed MAX_SUPPLY across eras", async () => {
+      const era0Cap = await token.eraEmissionCap(); // 400M
+      await token.connect(minter).mint(user1.address, era0Cap, "fill-era0");
+
+      // Advance to era 1
+      await time.increase(4 * 365 * 24 * 60 * 60);
+      const era1Cap = await token.eraEmissionCap(); // 200M
+      await token.connect(minter).mint(user1.address, era1Cap, "fill-era1");
+
+      // Advance to era 2
+      await time.increase(4 * 365 * 24 * 60 * 60);
+      const era2Cap = await token.eraEmissionCap(); // 100M
+      await token.connect(minter).mint(user1.address, era2Cap, "fill-era2");
+
+      // totalMinted = 700M, MAX_SUPPLY = 1B, but era 3 cap = 50M
+      // Advance to era 3
+      await time.increase(4 * 365 * 24 * 60 * 60);
+      const era3Cap = await token.eraEmissionCap(); // 50M
+      await token.connect(minter).mint(user1.address, era3Cap, "fill-era3");
+
+      // totalMinted = 750M. Advance to era 4 cap = 25M
+      await time.increase(4 * 365 * 24 * 60 * 60);
+      // Still under MAX_SUPPLY, should work
+      await token.connect(minter).mint(user1.address, ONE_TRUTH, "era4-mint");
+      expect(await token.totalMinted()).to.equal(era0Cap + era1Cap + era2Cap + era3Cap + ONE_TRUTH);
     });
   });
 

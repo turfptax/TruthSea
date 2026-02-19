@@ -79,9 +79,9 @@ contract TruthDAG {
     //  State
     // ──────────────────────────────────────────────
 
-    ITruthRegistryV2 public registry;
-    ITruthToken public truthToken;
-    ITruthStaking public staking;
+    ITruthRegistryV2 public immutable registry;
+    ITruthToken public immutable truthToken;
+    ITruthStaking public immutable staking;
     address public owner;
 
     uint256 public nextEdgeId;
@@ -145,6 +145,20 @@ contract TruthDAG {
     );
     event WeakLinkFlagged(uint256 indexed edgeId, address indexed flagger);
     event WeakLinkRewarded(uint256 indexed edgeId, address indexed flagger, uint256 reward);
+    event ConfigUpdated(
+        uint256 minEdgeStake,
+        uint16 propagationFloor,
+        uint16 propagationDamping,
+        uint16 contradictionPenalty,
+        uint16 contradictionFloor,
+        uint256 weakLinkRewardWindow,
+        uint256 edgeMaturityPeriod,
+        uint256 propagationReward,
+        uint256 edgeSurvivalReward,
+        uint256 weakLinkBounty
+    );
+    event WeightsUpdated(uint16 correspondence, uint16 coherence, uint16 convergence, uint16 pragmatism);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ──────────────────────────────────────────────
     //  Modifiers
@@ -579,6 +593,13 @@ contract TruthDAG {
         uint256 _edgeSurvivalReward,
         uint256 _weakLinkBounty
     ) external onlyOwner {
+        require(
+            uint256(_propagationFloor) + uint256(_propagationDamping) == 10000,
+            "Floor + damping must equal 10000"
+        );
+        require(_contradictionFloor <= 10000, "Contradiction floor out of range");
+        require(_contradictionPenalty <= 10000, "Contradiction penalty out of range");
+
         minEdgeStake = _minEdgeStake;
         propagationFloor = _propagationFloor;
         propagationDamping = _propagationDamping;
@@ -589,6 +610,13 @@ contract TruthDAG {
         propagationReward = _propagationReward;
         edgeSurvivalReward = _edgeSurvivalReward;
         weakLinkBounty = _weakLinkBounty;
+
+        emit ConfigUpdated(
+            _minEdgeStake, _propagationFloor, _propagationDamping,
+            _contradictionPenalty, _contradictionFloor,
+            _weakLinkRewardWindow, _edgeMaturityPeriod,
+            _propagationReward, _edgeSurvivalReward, _weakLinkBounty
+        );
     }
 
     function setWeights(
@@ -605,10 +633,14 @@ contract TruthDAG {
         weightCoherence = _coherence;
         weightConvergence = _convergence;
         weightPragmatism = _pragmatism;
+
+        emit WeightsUpdated(_correspondence, _coherence, _convergence, _pragmatism);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Zero address");
+        address oldOwner = owner;
         owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

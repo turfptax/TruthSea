@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "./TruthRegistryV2.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title BountyBridge
@@ -22,7 +23,7 @@ interface ITruthRegistryV2 {
     function getQuantum(uint256 quantumId) external view returns (TruthRegistryV2.TruthQuantum memory);
 }
 
-contract BountyBridge {
+contract BountyBridge is ReentrancyGuard {
     // ──────────────────────────────────────────────
     //  Types
     // ──────────────────────────────────────────────
@@ -44,7 +45,7 @@ contract BountyBridge {
     // ──────────────────────────────────────────────
     //  State
     // ──────────────────────────────────────────────
-    ITruthRegistryV2 public registry;
+    ITruthRegistryV2 public immutable registry;
     address public owner;
 
     uint256 public nextBountyId;
@@ -65,6 +66,7 @@ contract BountyBridge {
     event BountyCompleted(uint256 indexed id, uint256 indexed quantumId, address indexed claimant, uint256 payout);
     event BountyRefunded(uint256 indexed id, address indexed poster, uint256 amount);
     event BountyDisputed(uint256 indexed id, uint256 indexed quantumId);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ──────────────────────────────────────────────
     //  Modifiers
@@ -143,7 +145,7 @@ contract BountyBridge {
     function completeBountyWithQuantum(
         uint256 bountyId,
         uint256 quantumId
-    ) external {
+    ) external nonReentrant {
         TruthBounty storage b = bounties[bountyId];
         require(b.status == BountyStatus.Claimed, "Not claimed");
         require(b.claimant == msg.sender, "Not claimant");
@@ -182,7 +184,7 @@ contract BountyBridge {
     //  Retry completion (after more verifiers score)
     // ──────────────────────────────────────────────
 
-    function retryCompletion(uint256 bountyId) external {
+    function retryCompletion(uint256 bountyId) external nonReentrant {
         TruthBounty storage b = bounties[bountyId];
         require(b.status == BountyStatus.PendingVerification, "Not pending");
         require(b.claimant == msg.sender, "Not claimant");
@@ -211,7 +213,7 @@ contract BountyBridge {
     //  Refund expired bounties
     // ──────────────────────────────────────────────
 
-    function refundExpired(uint256 bountyId) external {
+    function refundExpired(uint256 bountyId) external nonReentrant {
         TruthBounty storage b = bounties[bountyId];
         require(
             b.status == BountyStatus.Open || b.status == BountyStatus.Claimed || b.status == BountyStatus.PendingVerification,
@@ -251,6 +253,8 @@ contract BountyBridge {
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Zero address");
+        address oldOwner = owner;
         owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

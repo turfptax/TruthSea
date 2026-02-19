@@ -5,8 +5,13 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "audit:slither": "slither . --config-file slither.config.json",
     "deploy:local": "hardhat run scripts/deploy.js",
-    "deploy:amoy": "hardhat run scripts/deploy.js --network amoy"
+    "deploy:amoy": "hardhat run scripts/deploy.js --network amoy",
+    "deploy:base-sepolia": "hardhat run scripts/deploy-v2.js --network base_sepolia",
+    "deploy:dag": "hardhat run scripts/deploy-v2-dag.js --network base_sepolia",
+    "backfill": "hardhat run scripts/backfill-edges.js --network base_sepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

@@ -30,11 +30,12 @@ contract TruthToken is ERC20, Ownable {
     // ──────────────────────────────────────────────
     //  State
     // ──────────────────────────────────────────────
-    uint256 public deployedAt;
+    uint256 public immutable deployedAt;
     uint256 public totalMinted;
     uint256 public totalBurned;
 
     mapping(address => bool) public minters;  // TruthRegistry, BountyPool, etc.
+    mapping(uint256 => uint256) public eraMinted; // era => total minted in that era
 
     // ──────────────────────────────────────────────
     //  Events
@@ -89,7 +90,12 @@ contract TruthToken is ERC20, Ownable {
      */
     function mint(address to, uint256 amount, string calldata reason) external onlyMinter {
         require(totalMinted + amount <= MAX_SUPPLY, "Exceeds max supply");
-        // In production: also enforce per-era caps
+
+        // Enforce per-era emission caps (halving schedule)
+        uint256 era = currentEra();
+        require(eraMinted[era] + amount <= eraEmissionCap(), "Exceeds era emission cap");
+        eraMinted[era] += amount;
+
         totalMinted += amount;
         _mint(to, amount);
         emit TruthMinted(to, amount, reason);

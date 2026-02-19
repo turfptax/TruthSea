@@ -74,7 +74,7 @@ contract TruthRegistryV2 {
     // ──────────────────────────────────────────────
     //  State
     // ──────────────────────────────────────────────
-    ITruthToken public truthToken;
+    ITruthToken public immutable truthToken;
     address public owner;
 
     uint256 public nextQuantumId;
@@ -117,6 +117,8 @@ contract TruthRegistryV2 {
     event QuantumDisputed(uint256 indexed id, address indexed challenger, uint256 forkId);
     event QuantumArchived(uint256 indexed id);
     event AgentIdentityLinked(address indexed wallet, bytes32 erc8004AgentId);
+    event RewardsUpdated(uint256 hostReward, uint256 vetReward, uint256 minStake);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ──────────────────────────────────────────────
     //  Modifiers
@@ -412,10 +414,13 @@ contract TruthRegistryV2 {
         hostReward = _host;
         vetReward = _vet;
         minStake = _minStake;
+        emit RewardsUpdated(_host, _vet, _minStake);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Zero address");
+        address oldOwner = owner;
         owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

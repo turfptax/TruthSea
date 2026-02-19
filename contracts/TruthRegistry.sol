@@ -48,7 +48,7 @@ contract TruthRegistry {
     // ──────────────────────────────────────────────
     //  State
     // ──────────────────────────────────────────────
-    ITruthToken public truthToken;
+    ITruthToken public immutable truthToken;
     address public owner;
 
     uint256 public nextQuantumId;
@@ -71,6 +71,7 @@ contract TruthRegistry {
     event QuantumVerified(uint256 indexed id, address indexed verifier, PillarScores scores);
     event QuantumDisputed(uint256 indexed id, address indexed challenger, uint256 forkId);
     event QuantumArchived(uint256 indexed id);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ──────────────────────────────────────────────
     //  Modifiers
@@ -231,6 +232,8 @@ contract TruthRegistry {
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Zero address");
+        address oldOwner = owner;
         owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

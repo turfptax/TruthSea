@@ -539,15 +539,65 @@ describe("TruthDAG", function () {
       expect(await dag.propagationFloor()).to.equal(2000);
     });
 
+    it("setConfig emits ConfigUpdated event", async () => {
+      await expect(
+        dag.setConfig(
+          ethers.parseEther("20"), 2000, 8000, 2000, 3000,
+          60 * 24 * 60 * 60, 14 * 24 * 60 * 60,
+          ethers.parseEther("5"), ethers.parseEther("30"), ethers.parseEther("200"),
+        )
+      ).to.emit(dag, "ConfigUpdated");
+    });
+
+    it("setConfig reverts if floor + damping != 10000", async () => {
+      await expect(
+        dag.setConfig(
+          ethers.parseEther("10"), 3000, 8000, 1500, 4000,
+          30 * 24 * 60 * 60, 7 * 24 * 60 * 60,
+          ethers.parseEther("2"), ethers.parseEther("20"), ethers.parseEther("100"),
+        )
+      ).to.be.revertedWith("Floor + damping must equal 10000");
+    });
+
+    it("setConfig reverts if contradiction floor out of range", async () => {
+      await expect(
+        dag.setConfig(
+          ethers.parseEther("10"), 3000, 7000, 1500, 10001,
+          30 * 24 * 60 * 60, 7 * 24 * 60 * 60,
+          ethers.parseEther("2"), ethers.parseEther("20"), ethers.parseEther("100"),
+        )
+      ).to.be.revertedWith("Contradiction floor out of range");
+    });
+
+    it("setConfig reverts if contradiction penalty out of range", async () => {
+      await expect(
+        dag.setConfig(
+          ethers.parseEther("10"), 3000, 7000, 10001, 4000,
+          30 * 24 * 60 * 60, 7 * 24 * 60 * 60,
+          ethers.parseEther("2"), ethers.parseEther("20"), ethers.parseEther("100"),
+        )
+      ).to.be.revertedWith("Contradiction penalty out of range");
+    });
+
     it("non-owner cannot update config", async () => {
       await expect(
-        dag.connect(proposer).setConfig(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        dag.connect(proposer).setConfig(
+          ethers.parseEther("10"), 3000, 7000, 1500, 4000,
+          30 * 24 * 60 * 60, 7 * 24 * 60 * 60,
+          ethers.parseEther("2"), ethers.parseEther("20"), ethers.parseEther("100"),
+        )
       ).to.be.revertedWith("Not owner");
     });
 
     it("owner can update weights", async () => {
       await dag.setWeights(2500, 2500, 2500, 2500);
       expect(await dag.weightCorrespondence()).to.equal(2500);
+    });
+
+    it("setWeights emits WeightsUpdated event", async () => {
+      await expect(dag.setWeights(2500, 2500, 2500, 2500))
+        .to.emit(dag, "WeightsUpdated")
+        .withArgs(2500, 2500, 2500, 2500);
     });
 
     it("weights must sum to 10000", async () => {
